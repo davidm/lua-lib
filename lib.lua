@@ -92,17 +92,28 @@ DESIGN NOTES
   `LIB.prepend`, `LIB.append`, and `LIB.path/cpath` cause global side-effects.
   After all, `require` utilizes `package.path` and `package.cpath` globals.
 
-HOME PAGE / DOWNLOAD
+DEPENDENCIES
+
+  None (other than Lua 5.1 or 5.2).
+  
+HOME PAGE
 
   https://gist.github.com/1342319
   
-INSTALLATION
+DOWNLOAD/INSTALL
 
-  Copy lib.lua into your LUA_PATH.  You may optionally run
-  "lua lib.lua unpack" to unpack the module into individual files in
-  an "out" subdirectory.   file_slurp ( https://gist.github.com/1325400/ )
-  is required to do this.  To subsequently install into LuaRocks, run
-  "cd out && luarocks make lib*.rockspec"
+  If using LuaRocks:
+    luarocks install lua-lib
+
+  Otherwise, download <https://raw.github.com/gist/1342319/globtopattern.lua>.
+  Alternately, if using git:
+    git clone git://gist.github.com/1342319.git lua-lib
+    cd lua-lib
+  Optionally unpack and install in LuaRocks:
+    Download <https://raw.github.com/gist/1422205/sourceunpack.lua>.
+    lua sourceunpack.lua lib.lua
+    cd out && luarocks make *.rockspec
+
   
 RELATED WORK
 
@@ -136,7 +147,7 @@ THE SOFTWARE.
 -- lib.lua
 -- (c) 2011 David Manura.  Licensed under the same terms as Lua 5.1 (MIT license).
 
-local M = {_TYPE='module', _NAME='lib', _VERSION='000.001.001'}
+local M = {_TYPE='module', _NAME='lib', _VERSION='0.1.20111203'}
 
 local sep = package.config:sub(3,3)
 
@@ -184,34 +195,31 @@ end
 
 setmetatable(M, {__call = function(_, dir) return M.prepend(dir) end})
 
--- This ugly line will delete itself upon unpacking the module.
-if...=='unpack'then assert(loadstring(io.open(arg[0]):read'*a':gsub('[^\n]*return M[^\n]*','')))()end
-
 return M
 
 ---------------------------------------------------------------------
 
---[[ FILE lib-$(_VERSION)-1.rockspec
+--[[ FILE lua-lib-$(_VERSION)-1.rockspec
 
-package = 'lib'
+package = 'lua-lib'
 version = '$(_VERSION)-1'
 source = {
-  -- IMPROVE?
-  --url = 'https://raw.github.com/gist/1342319/file_slurp.lua',
-  url = 'https://gist.github.com/gists/1342319/download',
-  file = 'lib-$(_VERSION).tar.gz'
-  --url = 'https://raw.github.com/gist/1342319/FIX/dir.lua',
-  --md5 = 'FIX'
+  url = 'https://raw.github.com/gist/1342319/$(GITID)/lib.lua',
+  --url = 'https://raw.github.com/gist/1342319/lib.lua', -- latest raw
+  --url = 'https://gist.github.com/gists/1342319/download', -- latest archive
+  md5 = '$(MD5)'
 }
 description = {
   summary = 'Simple insertion of directories in package search paths.',
   detailed =
     'Simple insertion of directories in package search paths.',
   license = 'MIT/X11',
-  homepage = 'https://gist.github.com/TODO',
+  homepage = 'https://gist.github.com/1342319',
   maintainer = 'David Manura'
 }
-dependencies = {}
+dependencies = {
+  'lua >= 5.1' -- including 5.2
+}
 build = {
   type = 'builtin',
   modules = {
@@ -278,34 +286,8 @@ M.path = {'<dir>/?.x'}
 local require2 = M.newrequire('.')
 local X = require2 'tmp135'
 assert(X)
+os.remove 'tmp135.x'
 
 print 'OK'
-
---]]---------------------------------------------------------------------
-
---[[ FILE unpack.lua  -- return M
-
--- This optional code unpacks files into an "out" subdirectory for deployment.
-local M = M
-local FS = require 'file_slurp'
-local name = arg[0]:match('[^/\\]+')
-local code = FS.readfile(name, 'T')
-code = code:gsub('%-*\n*%-%-%[%[%s*FILE%s+(%S+).-\n\n?(.-)%-%-%]%]%-*%s*',
- function(filename, text)
-  filename = filename:gsub('%$%(_VERSION%)', M._VERSION)
-  text = text:gsub('%$%(_VERSION%)', M._VERSION)
-  if filename ~= 'unpack.lua' then
-    if not FS.writefile('out/.test', '', 's') then os.execute'mkdir out' end
-    os.remove'out/.test'
-    print('writing out/' .. filename)
-    FS.writefile('out/' .. filename, text)
-  end
-  return ''
-end)
-code = code:gsub('%-%- ?This ugly line[^\n]*\n[^\n]*\n', '')
-print('writing out/' .. name)
-FS.writefile('out/' .. name, code)
-print('testing...')
-assert(loadfile('out/test.lua'))()
 
 --]]---------------------------------------------------------------------
