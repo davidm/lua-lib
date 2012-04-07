@@ -1,0 +1,26 @@
+package = 'lua-lib'
+version = '$(_VERSION)-1'
+source = {
+  url = 'https://github.com/davidm/lua-lib',
+}
+description = {
+  summary = 'Simple insertion of directories in package search paths.',
+  detailed =
+    'Simple insertion of directories in package search paths.',
+  license = 'MIT/X11',
+  homepage = 'https://github.com/davidm/lua-lib',
+  maintainer = 'David Manura'
+}
+dependencies = {
+  'lua >= 5.1' -- including 5.2
+}
+build = {
+  type = 'builtin',
+  modules = {
+    ['lib'] = 'lua/lib.lua'
+  }
+}
+-- for building the rockspec:
+-- VERSIONFROM="lua/lib.lua"
+-- ROCKVERSION="1"
+-- ROCKSCMVERSION="1"

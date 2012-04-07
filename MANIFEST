@@ -1,0 +1,8 @@
+CHANGES.txt
+README.txt
+rockspec.in
+test.lua
+lua/lib.lua
+Makefile
+MANIFEST
+util.mk
