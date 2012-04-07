@@ -53,12 +53,17 @@ API
   
     This is a table containing the formats of templates inserted into
     `package.path` and `package.cpath` by `LIB.prepend` and
-    `LIB.append`.  For example,
+    `LIB.append`.  For example, default values are
   
       LIB.path = {'<dir>/?.lua', '<dir>/?/init.lua'}
       LIB.cpath = {'<dir>/?.so', '<dir>/?.dll'}
 
     Any '<dir>' in these templates is replaced by the path being added.
+    
+    When this module is first loaded, `LIB.cpath` will contain 
+    '<dir>/?.so' if the package.cpath originally contained any '?.so' entries,
+    and likewise for '?.dll'.  However, both forms will be added if
+    `package.cpath` has neither.
     
   LIB.newrequire( [dir...] ) -> require
   
@@ -83,6 +88,10 @@ DESIGN NOTES
 
   '<dir>/?.lua' preceeds '<dir>/?/init.lua' as in luaconf.h.  This in
   theory allows a module to be named 'init'.
+  
+  Paths are by default prepended rather than appended to allow
+  locally installed modules to override any globally installed modules.
+  (Perl 'lib' does likewise.)
   
   .luac files are not by default included in LIB.path (same as in luaconf.h).  It
   may be argued that compiled bytecode just as well be given a .lua extension.

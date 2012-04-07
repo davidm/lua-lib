@@ -37,6 +37,8 @@ function FS.writefile(filename, data, options)
 end
 
 local M = require 'lib'
+assert(#M.cpath ~= 0)
+M.cpath = {'<dir>/?.so', '<dir>/?.dll'}
 
 local function checkeq(a, b, e)
   if a ~= b then error(

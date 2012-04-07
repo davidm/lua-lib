@@ -1,7 +1,7 @@
 -- lib.lua
 -- (c) 2011-2012 David Manura.  Licensed under Lua 5.1 terms (MIT license).
 
-local M = {_TYPE='module', _NAME='lib', _VERSION='0.1.1.20120406'}
+local M = {_TYPE='module', _NAME='lib', _VERSION='0.1.1.20120407'}
 
 local sep = package.config:sub(3,3)
 
@@ -17,7 +17,13 @@ local function _append(a, b) return (a=='' or b=='') and a..b or a..sep..b end
 local function _prepend(a, b) return _append(b, a) end
 
 M.path = {'<dir>/?.lua', '<dir>/?/init.lua'}
-M.cpath = {'<dir>/?.so', '<dir>/?.dll'}
+M.cpath = {}
+local has_so  = (package.cpath..';'):match'%?%.so;'
+local has_dll = (package.cpath..';'):match'%?%.dll;'
+local has_none = not(has_so or has_dll)
+if has_so  or has_none then table.insert(M.cpath, '<dir>/?.so')  end
+if has_dll or has_none then table.insert(M.cpath, '<dir>/?.dll') end
+
 
 function _insert(dir, op)
   dir = dir:gsub('[/\\]$', '') -- omit any trailing slash
