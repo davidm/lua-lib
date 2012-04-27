@@ -4,14 +4,31 @@ LUA MODULE
   
 SYNOPSIS
 
-  require 'lib' '/foo/bar'  -- or, equivalently, `require 'lib'.prepend '/foo/bar'`
-    -- adds given directory to package.path and package.cpath.
-  require 'lib'.append '/foo/baz'   -- or adds after existing path templates
+  -- Basic usage: adding directories to module search paths.
+  require 'lib' '/foo/bar'
+    -- prepends given directory to package.path and package.cpath.
+  require 'lib'.prepend '/foo/bar' -- same as above
+  require 'lib'.append '/foo/baz'  -- appends directory instead
+  require 'lib' '<bin>/../lib/lua' -- prepends directory '../lib/lua'
+                       -- relative to the currently executing script
+                       -- (requires 'findbin' [2] module)
+  require 'lpeg' -- this now searches in above paths.
+
+  -- Localized changes to module search paths (avoids side-effects).
+  do
+    local require = require 'lib'.newrequire('/foo/bar', '/bar/foo')
+    local BAZ = require 'baz'  -- searches inside /foo/bar & /bar/foo
+  end
+  local QUX = require 'qux'  -- does not search inside /foo/bar & /bar/foo
+
+  -- Utilty functions (assuming "lua test/example.lua").
   local LIB = require 'lib'
-  LIB.split(package.path) --> {'/foo/bar/?.lua', '/foo/bar/?/init.lua', . . . ,
-                          --   '/foo/baz/?.lua', '/foo/baz/?/init.lua'}
+  LIB.split(package.path)
+     --> {'/foo/bar/?.lua', '/foo/bar/?/init.lua',
+          'test/../lib/lua/?.lua', 'test/../lib/lua/?/init.lua', 
+          . . . , '/foo/baz/?.lua', '/foo/baz/?/init.lua'}
   
-  -- custom template formats
+  -- Custom template formats.
   require 'lib'.path = {'<dir>/?.luac', '<dir>/.lua'}
   require 'lib'.prepend '/foo/bar'
   print(package.path) --> '/foo/bar/?.luac;/foo/bar/?.lua; . . .'
@@ -28,9 +45,14 @@ API
   LIB.prepend(dir)
   
     Prepends templates for directory `dir` to `package.path` and `package.cpath`.
-    Template patterns in `LIB.template` are used to build the templates.  Example:
+    Template patterns in `LIB.template` are used to build the templates.
+    `dir` may be prefixed by the text `<bin>`, which will be replaced with
+    the directory of the currently executing script (this requires the
+    `findbin` [2] module).
+    Examples:
     
       require 'lib'.prepend'/foo/bar'
+      require 'lib'.prepend'<bin>/../lib/lua'
       
     Function raises an error if `dir` contains a `?`.
     
@@ -40,9 +62,10 @@ API
 
   LIB (dir)
   
-    This is the same as `LIB.prepend(dir)`.  Example:
+    This is the same as `LIB.prepend(dir)`.  Examples:
     
       require 'lib' '/foo/bar'
+      require 'lib' '<bin>/../lib/lua'
     
   LIB.split(paths)
   
@@ -73,9 +96,9 @@ API
     to the search paths, invokes the original `require` function, and then
     restores the search paths.
      
-       do
-         local require = require 'lib'.newrequire('/foo/bar', '/bar/foo')
-         local BAZ = require 'baz'  -- searches inside /foo/bar & /bar/foo
+      do
+        local require = require 'lib'.newrequire('/foo/bar', '/bar/foo')
+        local BAZ = require 'baz'  -- searches inside /foo/bar & /bar/foo
       end
       local QUX = require 'qux'  -- does not search inside /foo/bar & /bar/foo
 
@@ -100,10 +123,14 @@ DESIGN NOTES
   
   `LIB.prepend`, `LIB.append`, and `LIB.path/cpath` cause global side-effects.
   After all, `require` utilizes `package.path` and `package.cpath` globals.
+  
+  Directory names cannot contain '?' or be prefixed by '<bin>'.  For future
+  compatibility, avoid directory names with '<' and '>' characters.
 
 DEPENDENCIES
 
-  None (other than Lua 5.1 or 5.2).
+  Lua 5.1 or 5.2.
+  Optionally, the 'findbin' module [2].
   
 HOME PAGE
 
@@ -127,8 +154,8 @@ DOWNLOAD/INSTALL
   
 RELATED WORK
 
-  http://search.cpan.org/perldoc?lib  (Perl "use lib")
-  https://github.com/davidm/lua-find-bin (Lua 'findbin' module)
+  [1] http://search.cpan.org/perldoc?lib  (Perl "use lib")
+  [2] https://github.com/davidm/lua-find-bin (Lua 'findbin' module)
 
 COPYRIGHT
 

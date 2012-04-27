@@ -1,4 +1,6 @@
 development
+  A '<bin>' prefixed to a directory string will be replaced with the directory
+    of the currently executing script (requires 'findbin' module).
   Raise error if dierctory contains '?' character (unescapable).
 
 0.1.1.20120407

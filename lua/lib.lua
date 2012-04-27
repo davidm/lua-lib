@@ -28,6 +28,9 @@ if has_dll or has_none then table.insert(M.cpath, '<dir>/?.dll') end
 function _insert(dir, op)
   assert(not dir:match'%?', 'dir contains a ?') -- cannot be escaped
   dir = dir:gsub('[/\\]$', '') -- omit any trailing slash
+  dir = dir:gsub('^<bin>', function()
+    return require 'findbin'.bin
+  end)
   local formats = M
   for _, which in ipairs{'path', 'cpath'} do
     local more = ''
@@ -46,8 +49,10 @@ function M.newrequire(...)
   local dirs = {...}
   return function(name)
     local oldpath, oldcpath = package.path, package.cpath
-    for i=#dirs,1,-1 do M.prepend(dirs[i]) end
-    local mod, err = pcall(require, name)
+    local mod, err = pcall(function()
+      for i=#dirs,1,-1 do M.prepend(dirs[i]) end  -- may assert
+      return require(name)
+    end)
     package.path, package.cpath = oldpath, oldcpath
     if not mod then error(err) end
     return mod

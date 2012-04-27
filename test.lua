@@ -97,5 +97,16 @@ local X = require2 'tmp135'
 assert(X)
 os.remove 'tmp135.x'
 
-print 'OK'
+-- findbin tests
+package.loaded.findbin = nil
+arg[0] = 'a/b/c.lua'  -- trick findbin
+if pcall(require, 'findbin') then
+  package.path = ''; package.cpath = ''
+  M.path =  {'<dir>/?.lua', '<dir>/?/init.lua'}
+  M.prepend('<bin>/../foo')
+  checkeq(package.path, P'a/b/../foo/?.lua;a/b/../foo/?/init.lua')
+else
+  print 'WARNING: tests with findbin skipped (module not found)'
+end
 
+print 'OK'
