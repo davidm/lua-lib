@@ -25,13 +25,13 @@ if has_so  or has_none then table.insert(M.cpath, '<dir>/?.so')  end
 if has_dll or has_none then table.insert(M.cpath, '<dir>/?.dll') end
 
 
-function _insert(dir, op)
+function _insert(dir, op, formats)
   assert(not dir:match'%?', 'dir contains a ?') -- cannot be escaped
   dir = dir:gsub('[/\\]$', '') -- omit any trailing slash
   dir = dir:gsub('^<bin>', function()
     return require 'findbin'.bin
   end)
-  local formats = M
+  formats = formats or M
   for _, which in ipairs{'path', 'cpath'} do
     local more = ''
     for _, pat in ipairs(formats[which] or {}) do
@@ -42,15 +42,25 @@ function _insert(dir, op)
   end
 end
 
-function M.append(dir)  _insert(dir, _append) end
-function M.prepend(dir) _insert(dir, _prepend) end
+function M.append(dir)  _insert(dir, _append, M) end
+function M.prepend(dir) _insert(dir, _prepend, M) end
+
+local function _toarray(o)
+  return type(o) == 'string' and {o} or o
+end
 
 function M.newrequire(...)
-  local dirs = {...}
+  local opt = type(...) == 'table' and ... or {...}
+  local before = _toarray(opt.before or opt)
+  local after = _toarray(opt.after or {})
+  local path = _toarray(opt.path or M.path)
+  local cpath = _toarray(opt.cpath or M.cpath)
+  local formats = {path=path, cpath=cpath}
   return function(name)
     local oldpath, oldcpath = package.path, package.cpath
-    local mod, err = pcall(function()
-      for i=#dirs,1,-1 do M.prepend(dirs[i]) end  -- may assert
+    local mod, err = pcall(function()  -- may assert
+      for i=#before,1,-1 do _insert(before[i], _prepend, formats) end
+      for i=#after,1,-1 do _insert(after[i], _append, formats) end
       return require(name)
     end)
     package.path, package.cpath = oldpath, oldcpath

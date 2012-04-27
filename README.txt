@@ -8,13 +8,13 @@ SYNOPSIS
   require 'lib' '/foo/bar'
     -- prepends given directory to package.path and package.cpath.
   require 'lib'.prepend '/foo/bar' -- same as above
-  require 'lib'.append '/foo/baz'  -- appends directory instead
-  require 'lib' '<bin>/../lib/lua' -- prepends directory '../lib/lua'
+  require 'lib'.append '/foo/baz'  -- appends instead
+  require 'lib' '<bin>/../lib/lua' -- prepends directory
                        -- relative to the currently executing script
                        -- (requires 'findbin' [2] module)
   require 'lpeg' -- this now searches in above paths.
 
-  -- Localized changes to module search paths (avoids side-effects).
+  -- Localized changes to module search paths (reduces side-effects).
   do
     local require = require 'lib'.newrequire('/foo/bar', '/bar/foo')
     local BAZ = require 'baz'  -- searches inside /foo/bar & /bar/foo
@@ -42,31 +42,31 @@ DESCRIPTION
 
 API
 
-  LIB.prepend(dir)
+  LIB (dir)
   
-    Prepends templates for directory `dir` to `package.path` and `package.cpath`.
+    Prepends templates for directory `dir` to `package.path` and
+    `package.cpath`.
     Template patterns in `LIB.template` are used to build the templates.
     `dir` may be prefixed by the text `<bin>`, which will be replaced with
     the directory of the currently executing script (this requires the
-    `findbin` [2] module).
-    Examples:
+    `findbin` [2] module).  Examples:
+    
+      require 'lib' '/foo/bar'
+      require 'lib' '<bin>/../lib/lua'
+      
+    Caveat: Function raises an error if `dir` contains a `?`.
+
+  LIB.prepend(dir)
+
+    This is the same as `LIB (dir)`.  Examples:
     
       require 'lib'.prepend'/foo/bar'
-      require 'lib'.prepend'<bin>/../lib/lua'
-      
-    Function raises an error if `dir` contains a `?`.
-    
+      require 'lib'.prepend'<bin>/../lib/lua'      
+
   LIB.append(dir)
   
     Same as `LIB.prepend` but appends rather than prepends.
 
-  LIB (dir)
-  
-    This is the same as `LIB.prepend(dir)`.  Examples:
-    
-      require 'lib' '/foo/bar'
-      require 'lib' '<bin>/../lib/lua'
-    
   LIB.split(paths)
   
     Splits package search string `paths` (in the format expected by
@@ -91,6 +91,8 @@ API
     `package.cpath` has neither.
     
   LIB.newrequire( [dir...] ) -> require
+  LIB.newrequire{ before={ [dir...] }, after={ [dir...] },
+                  path={ [format...] }, cpath={ [format...] }  }
   
     This builds a `require` like function that prepends the given directories
     to the search paths, invokes the original `require` function, and then
@@ -101,14 +103,21 @@ API
         local BAZ = require 'baz'  -- searches inside /foo/bar & /bar/foo
       end
       local QUX = require 'qux'  -- does not search inside /foo/bar & /bar/foo
+      
+      -- more complex
+      local require = require 'lib'.newrequire{before={'/a', '/b'}, after='/c',
+                                  path='<dir>/?.lua', cpath='<dir>/?.so'}
 
     Note: The new paths will also be visible if require is recursively invoked
     from the module being loaded.
+    Any formats are expanded at the time of the `require` call, not the
+    construction of the `require` function.
     
-    WARNING: The interface of the `newrequire` function is subject to change.
-    We may want to allow adding templates explicitly (rather than directories)
-    and removing templates from the paths searched by require.
-    
+    The second form allows both prepending and appending and specifying
+    template formats.  All parameters are optional.  If a string is passed
+    to a parameter expecting an arrray, it is converted to an array of size 1.
+    [dir...] and { [dir...] } are shorthand for { before = { [dir...] }}.
+
 DESIGN NOTES
 
   '<dir>/?.lua' preceeds '<dir>/?/init.lua' as in luaconf.h.  This in
@@ -118,8 +127,9 @@ DESIGN NOTES
   locally installed modules to override any globally installed modules.
   (Perl 'lib' does likewise.)
   
-  .luac files are not by default included in LIB.path (same as in luaconf.h).  It
-  may be argued that compiled bytecode just as well be given a .lua extension.
+  .luac files are not by default included in LIB.path (same as in luaconf.h).
+  It may be argued that compiled bytecode just as well be given a .lua
+  extension.
   
   `LIB.prepend`, `LIB.append`, and `LIB.path/cpath` cause global side-effects.
   After all, `require` utilizes `package.path` and `package.cpath` globals.
@@ -178,4 +188,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-  

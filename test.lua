@@ -96,6 +96,14 @@ local require2 = M.newrequire('.')
 local X = require2 'tmp135'
 assert(X)
 os.remove 'tmp135.x'
+package.path = '?.lua'
+local require2 = M.newrequire{before='a', after={'b','c'}, path='<dir>/?.luac'}
+local path
+package.preload._lib_debug = function()
+  path = package.path
+end
+require2 '_lib_debug'
+checkeq(path, 'a/?.luac;?.lua;c/?.luac;b/?.luac')
 
 -- findbin tests
 package.loaded.findbin = nil
