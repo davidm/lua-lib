@@ -8,11 +8,23 @@ SYNOPSIS
   require 'lib' '/foo/bar' -- prepends given directory
   require 'lib'.before '/foo/bar' -- same as above
   require 'lib'.after '/foo/baz'  -- appends instead
-  require 'lib' '<bin>/../lib/lua' -- prepends directory
-                       -- relative to the currently executing script
-                       -- (requires 'findbin' [2] module)
+  require 'lib' '<bin>/../lib/lua' -- prepends directory relative to
+        -- currently executing script (requires 'findbin' [2] module)
   require 'lpeg' -- this now searches in above paths.
-  
+
+  -- Custom template formats.
+  require 'lib'.path = {'<dir>/?.luac', '<dir>/.lua'}
+  require 'lib'.before '/foo/bar'
+  print(package.path) --> '/foo/bar/?.luac;/foo/bar/?.lua; . . .'
+
+  -- Combined function call:
+  require 'lib' {
+    before = {'/foo/bar', '/bar/foo'},
+    after = '/foo/baz',
+    path = {'<dir>/?.luac', '<dir>/.lua'},
+    cpath= '<dir>/.so'
+  }
+
   -- Localized changes to module search paths (reduces side-effects).
   do
     local require = require 'lib'.newrequire('/foo/bar', '/bar/foo')
@@ -20,25 +32,12 @@ SYNOPSIS
   end
   local QUX = require 'qux'  -- does not search inside /foo/bar & /bar/foo
 
-  -- Utilty functions (assuming "lua test/example.lua").
+ -- Utilty functions (assuming "lua test/example.lua").
   local LIB = require 'lib'
   LIB.split(package.path)
      --> {'/foo/bar/?.lua', '/foo/bar/?/init.lua',
           'test/../lib/lua/?.lua', 'test/../lib/lua/?/init.lua', 
           . . . , '/foo/baz/?.lua', '/foo/baz/?/init.lua'}
-  
-  -- Custom template formats.
-  require 'lib'.path = {'<dir>/?.luac', '<dir>/.lua'}
-  require 'lib'.before '/foo/bar'
-  print(package.path) --> '/foo/bar/?.luac;/foo/bar/?.lua; . . .'
-
-  -- More complex usage:
-  require 'lib' {
-    before = {'/foo/bar', '/bar/foo'},
-    after = '/foo/baz',
-    path = {'<dir>/?.luac', '<dir>/.lua'},
-    cpath= '<dir>/.so'
-  }
 
 DESCRIPTION
 
@@ -49,9 +48,9 @@ DESCRIPTION
 
 API
 
-  LIB (dir)
+  LIB ( [dir...] )
   
-    Prepends templates for directory `dir` to `package.path` and
+    Prepends templates for each directory `dir` to `package.path` and
     `package.cpath`.
     Template patterns in `LIB.template` are used to build the templates.
     `dir` may be prefixed by the text `<bin>`, which will be replaced with
@@ -60,27 +59,22 @@ API
     
       require 'lib' '/foo/bar'
       require 'lib' '<bin>/../lib/lua'
+      require 'lib' ('/foo/bar', '/bar/foo')
       
-    Caveat: Function raises an error if `dir` contains a `?`.
+    Caveat: Function raises an error if `dir` contains a `?` or path
+    separator (`package.config:sub(3,3)`, typically ';').
 
-  LIB.before(dir)
+  LIB.before( [dir...] )
 
     This is the same as `LIB (dir)`.  Examples:
     
       require 'lib'.before'/foo/bar'
       require 'lib'.before'<bin>/../lib/lua'      
 
-  LIB.after(dir)
+  LIB.after( [dir...] )
   
     Same as `LIB.before` but appends rather than prepends.
 
-  LIB.split(paths)
-  
-    Splits package search string `paths` (in the format expected by
-    `package.path` or `package.searchpath`) into an array of path templates:
-    
-      LIB.split('/foo/bar/?.so;/baz/?.so') --> {'/foo/bar/?.so', '/baz/?.so'}
-    
   LIB.path / LIB.cpath
   
     This is a table containing the formats of templates inserted into
@@ -96,14 +90,34 @@ API
     '<dir>/?.so' if the package.cpath originally contained any '?.so' entries,
     and likewise for '?.dll'.  However, both forms will be added if
     `package.cpath` has neither.
+
+  LIB { before={ [dir...] }, after={ [dir...] },
+        path={ [format...] }, cpath={ [format...] }  }
+	
+    This combines the above functions into a single function call.
+    Note, however, that the `path` and `cpath` will only apply to
+    the current function call and are not set globally in `LIB.path`
+    and `LIB.cpath`.
     
+    All parameters are optional.  If a string is passed
+    to a parameter expecting an arrray, it is converted to an array of size 1.
+    [dir...] and { [dir...] } are shorthand for { before = { [dir...] }}.
+
+  LIB.split(paths)
+  
+    Splits package search string `paths` (in the format expected by
+    `package.path` or `package.searchpath`) into an array of path templates:
+    
+      LIB.split('/foo/bar/?.so;/baz/?.so') --> {'/foo/bar/?.so', '/baz/?.so'}
+
   LIB.newrequire( [dir...] ) -> require
   LIB.newrequire{ before={ [dir...] }, after={ [dir...] },
-                  path={ [format...] }, cpath={ [format...] }  }
+                  path={ [format...] }, cpath={ [format...] }  } -> require
   
     This builds a `require` like function that prepends the given directories
     to the search paths, invokes the original `require` function, and then
-    restores the search paths.
+    restores the search paths.  The arguments are the same as for the
+    `LIB()` function.
      
       do
         local require = require 'lib'.newrequire('/foo/bar', '/bar/foo')
@@ -120,11 +134,6 @@ API
     Any formats are expanded at the time of the `require` call, not the
     construction of the `require` function.
     
-    The second form allows both prepending and appending and specifying
-    template formats.  All parameters are optional.  If a string is passed
-    to a parameter expecting an arrray, it is converted to an array of size 1.
-    [dir...] and { [dir...] } are shorthand for { before = { [dir...] }}.
-
 DESIGN NOTES
 
   '<dir>/?.lua' preceeds '<dir>/?/init.lua' as in luaconf.h.  This in
@@ -141,7 +150,8 @@ DESIGN NOTES
   `LIB.before`, `LIB.after`, and `LIB.path/cpath` cause global side-effects.
   After all, `require` utilizes `package.path` and `package.cpath` globals.
   
-  Directory names cannot contain '?' or be prefixed by '<bin>'.  For future
+  Directory names cannot contain '?' or path separator (typically ';')
+  or be prefixed by '<bin>'.  For future
   compatibility, avoid directory names with '<' and '>' characters.
 
 DEPENDENCIES

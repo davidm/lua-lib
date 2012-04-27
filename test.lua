@@ -74,6 +74,8 @@ checkeq(package.cpath, P'foo/?.so;foo/?.dll;bar/?.so;bar/?.dll')
 package.path = ''; package.cpath = ''
 local ok, err = pcall(function() M.after('a?b') end)
 assert(err:match'contains a %?') -- '?' can't be escaped
+local ok, err = pcall(function() M.after('a'..sep) end)
+assert(err:match'contains a %?') -- ';' can't be escaped
 
 -- test before
 package.path = ''; package.cpath = ''
@@ -89,6 +91,11 @@ package.path = ''
 M 'foo'
 checkeq(package.path, P'foo/?.lua;foo/?/init.lua')
 
+-- test complex
+package.cpath = '?.z'
+M {before='a', after={'b','c'}, cpath='<dir>/?.dllx'}
+checkeq(package.cpath, P'a/?.dllx;?.z;b/?.dllx;c/?.dllx')
+
 -- test newrequire
 FS.writefile('tmp135.x', 'return {}')
 M.path = {'<dir>/?.x'}
@@ -103,7 +110,7 @@ package.preload._lib_debug = function()
   path = package.path
 end
 require2 '_lib_debug'
-checkeq(path, 'a/?.luac;?.lua;c/?.luac;b/?.luac')
+checkeq(path, 'a/?.luac;?.lua;b/?.luac;c/?.luac')
 
 -- findbin tests
 package.loaded.findbin = nil

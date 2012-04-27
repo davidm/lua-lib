@@ -24,9 +24,9 @@ local has_none = not(has_so or has_dll)
 if has_so  or has_none then table.insert(M.cpath, '<dir>/?.so')  end
 if has_dll or has_none then table.insert(M.cpath, '<dir>/?.dll') end
 
-
 function _insert(dir, op, formats)
-  assert(not dir:match'%?', 'dir contains a ?') -- cannot be escaped
+  local bad = '[%?%'..sep..']'
+  assert(not dir:match(bad), 'dir contains a ? or ;') -- cannot be escaped
   dir = dir:gsub('[/\\]$', '') -- omit any trailing slash
   dir = dir:gsub('^<bin>', function()
     return require 'findbin'.bin
@@ -62,7 +62,7 @@ end
 
 local function _apply_paths(a)
   for i=#a.before,1,-1 do _insert(a.before[i], _before, a.formats) end
-  for i=#a.after,1,-1  do _insert(a.after[i],  _after,  a.formats) end
+  for i=1,#a.after     do _insert(a.after[i],  _after,  a.formats) end
 end
 
 function M.newrequire(...)
