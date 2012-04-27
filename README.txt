@@ -13,16 +13,16 @@ SYNOPSIS
   require 'lpeg' -- this now searches in above paths.
 
   -- Custom template formats.
-  require 'lib'.path = {'<dir>/?.luac', '<dir>/.lua'}
-  require 'lib'.before '/foo/bar'
+  require 'lib'.path_form = {'<dir>/?.luac', '<dir>/.lua'}
+  require 'lib' '/foo/bar'
   print(package.path) --> '/foo/bar/?.luac;/foo/bar/?.lua; . . .'
 
   -- Combined function call:
   require 'lib' {
     before = {'/foo/bar', '/bar/foo'},
     after = '/foo/baz',
-    path = {'<dir>/?.luac', '<dir>/.lua'},
-    cpath= '<dir>/.so'
+    path_form = {'<dir>/?.luac', '<dir>/.lua'},
+    cpath_form= '<dir>/.so'
   }
 
   -- Localized changes to module search paths (reduces side-effects).
@@ -75,29 +75,29 @@ API
   
     Same as `LIB.before` but appends rather than prepends.
 
-  LIB.path / LIB.cpath
+  LIB.path_form / LIB.cpath_form
   
     This is a table containing the formats of templates inserted into
     `package.path` and `package.cpath` by `LIB.before` and
     `LIB.after`.  For example, default values are
   
-      LIB.path = {'<dir>/?.lua', '<dir>/?/init.lua'}
-      LIB.cpath = {'<dir>/?.so', '<dir>/?.dll'}
+      LIB.path_form = {'<dir>/?.lua', '<dir>/?/init.lua'}
+      LIB.cpath_form = {'<dir>/?.so', '<dir>/?.dll'}
 
     Any '<dir>' in these templates is replaced by the path being added.
     
-    When this module is first loaded, `LIB.cpath` will contain 
+    When this module is first loaded, `LIB.cpath_form` will contain 
     '<dir>/?.so' if the package.cpath originally contained any '?.so' entries,
     and likewise for '?.dll'.  However, both forms will be added if
     `package.cpath` has neither.
 
   LIB { before={ [dir...] }, after={ [dir...] },
-        path={ [format...] }, cpath={ [format...] }  }
+        path_form={ [format...] }, cpath_form={ [format...] }  }
 	
     This combines the above functions into a single function call.
-    Note, however, that the `path` and `cpath` will only apply to
-    the current function call and are not set globally in `LIB.path`
-    and `LIB.cpath`.
+    Note, however, that the `path_form` and `cpath_form` will only apply to
+    the current function call and are not set globally in `LIB.path_form`
+    and `LIB.cpath_form`.
     
     All parameters are optional.  If a string is passed
     to a parameter expecting an arrray, it is converted to an array of size 1.
@@ -112,7 +112,8 @@ API
 
   LIB.newrequire( [dir...] ) -> require
   LIB.newrequire{ before={ [dir...] }, after={ [dir...] },
-                  path={ [format...] }, cpath={ [format...] }  } -> require
+                  path_form={ [format...] }, cpath_form={ [format...] }  }
+                -> require
   
     This builds a `require` like function that prepends the given directories
     to the search paths, invokes the original `require` function, and then
@@ -127,7 +128,7 @@ API
       
       -- more complex
       local require = require 'lib'.newrequire{before={'/a', '/b'}, after='/c',
-                                  path='<dir>/?.lua', cpath='<dir>/?.so'}
+	                   path_form='<dir>/?.lua', cpath_form='<dir>/?.so'}
 
     Note: The new paths will also be visible if require is recursively invoked
     from the module being loaded.
@@ -143,11 +144,13 @@ DESIGN NOTES
   locally installed modules to override any globally installed modules.
   (Perl 'lib' does likewise.)
   
-  .luac files are not by default included in LIB.path (same as in luaconf.h).
+  .luac files are not by default included in LIB.path_form (same as in
+  luaconf.h).
   It may be argued that compiled bytecode just as well be given a .lua
   extension.
   
-  `LIB.before`, `LIB.after`, and `LIB.path/cpath` cause global side-effects.
+  `LIB.before`, `LIB.after`, and `LIB.path_form/cpath_form` cause global
+  side-effects.
   After all, `require` utilizes `package.path` and `package.cpath` globals.
   
   Directory names cannot contain '?' or path separator (typically ';')

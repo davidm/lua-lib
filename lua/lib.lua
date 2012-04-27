@@ -16,13 +16,13 @@ function M.join(paths) return table.concat(paths, sep) end
 local function _after(a, b) return (a=='' or b=='') and a..b or a..sep..b end
 local function _before(a, b) return _after(b, a) end
 
-M.path = {'<dir>/?.lua', '<dir>/?/init.lua'}
-M.cpath = {}
+M.path_form = {'<dir>/?.lua', '<dir>/?/init.lua'}
+M.cpath_form = {}
 local has_so  = (package.cpath..';'):match'%?%.so;'
 local has_dll = (package.cpath..';'):match'%?%.dll;'
 local has_none = not(has_so or has_dll)
-if has_so  or has_none then table.insert(M.cpath, '<dir>/?.so')  end
-if has_dll or has_none then table.insert(M.cpath, '<dir>/?.dll') end
+if has_so  or has_none then table.insert(M.cpath_form, '<dir>/?.so')  end
+if has_dll or has_none then table.insert(M.cpath_form, '<dir>/?.dll') end
 
 function _insert(dir, op, formats)
   local bad = '[%?%'..sep..']'
@@ -34,7 +34,7 @@ function _insert(dir, op, formats)
   formats = formats or M
   for _, which in ipairs{'path', 'cpath'} do
     local more = ''
-    for _, pat in ipairs(formats[which] or {}) do
+    for _, pat in ipairs(formats[which..'_form'] or {}) do
       local finalpat = pat:gsub('%<dir%>', dir)
       more = _after(more, finalpat)
     end
@@ -53,11 +53,11 @@ local function _normalize_args(...)
   local opt = type(...) == 'table' and ... or {...}
   local before = _toarray(opt.before or opt)
   local after = _toarray(opt.after or {})
-  local path = _toarray(opt.path or M.path)
-  local cpath = _toarray(opt.cpath or M.cpath)
-  local formats = {path=path, cpath=cpath}
+  local path_form = _toarray(opt.path_form or M.path_form)
+  local cpath_form = _toarray(opt.cpath_form or M.cpath_form)
+  local formats = {path_form=path_form, cpath_form=cpath_form}
   return {before=before, after=after,
-          path=path, cpath=cpath, formats=formats}
+          path_form=path_form, cpath_form=cpath_form, formats=formats}
 end
 
 local function _apply_paths(a)

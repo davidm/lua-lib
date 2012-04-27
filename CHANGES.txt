@@ -4,6 +4,7 @@ development
   Add more options to `newrequire` and `LIB ()` functions.
   append and prepend renamed after and before repectively.
   Raise error if directory contains '?' or ';' character (unescapable).
+  Rename LIB.path/cpath -> LIB.path_form/cpath_form.
   Add findbin dependency (optional but recommended).
 
 0.1.1.20120407
