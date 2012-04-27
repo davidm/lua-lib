@@ -31,6 +31,8 @@ API
     Template patterns in `LIB.template` are used to build the templates.  Example:
     
       require 'lib'.prepend'/foo/bar'
+      
+    Function raises an error if `dir` contains a `?`.
     
   LIB.append(dir)
   

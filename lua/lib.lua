@@ -26,6 +26,7 @@ if has_dll or has_none then table.insert(M.cpath, '<dir>/?.dll') end
 
 
 function _insert(dir, op)
+  assert(not dir:match'%?', 'dir contains a ?') -- cannot be escaped
   dir = dir:gsub('[/\\]$', '') -- omit any trailing slash
   local formats = M
   for _, which in ipairs{'path', 'cpath'} do

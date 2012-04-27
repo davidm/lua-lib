@@ -71,6 +71,9 @@ checkeq(package.cpath, P'foo/?.so;foo/?.dll')
 M.append('bar')
 checkeq(package.path, P'foo/?.lua;foo/?/init.lua;bar/?.lua;bar/?/init.lua')
 checkeq(package.cpath, P'foo/?.so;foo/?.dll;bar/?.so;bar/?.dll')
+package.path = ''; package.cpath = ''
+local ok, err = pcall(function() M.append('a?b') end)
+assert(err:match'contains a %?') -- '?' can't be escaped
 
 -- test prepend
 package.path = ''; package.cpath = ''
