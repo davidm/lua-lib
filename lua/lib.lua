@@ -1,7 +1,7 @@
 -- lib.lua
 -- (c) 2011-2012 David Manura.  Licensed under Lua 5.1 terms (MIT license).
 
-local M = {_TYPE='module', _NAME='lib', _VERSION='0.1.1.20120407'}
+local M = {_TYPE='module', _NAME='lib', _VERSION='0.2.0.20120426'}
 
 local sep = package.config:sub(3,3)
 

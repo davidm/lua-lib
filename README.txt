@@ -6,24 +6,21 @@ SYNOPSIS
 
   -- Basic usage: adding directories to package.path & package.cpath.
   require 'lib' '/foo/bar' -- prepends given directory
-  require 'lib'.before '/foo/bar' -- same as above
   require 'lib'.after '/foo/baz'  -- appends instead
   require 'lib' '<bin>/../lib/lua' -- prepends directory relative to
         -- currently executing script (requires 'findbin' [2] module)
   require 'lpeg' -- this now searches in above paths.
 
-  -- Custom template formats.
-  require 'lib'.path_form = {'<dir>/?.luac', '<dir>/.lua'}
-  require 'lib' '/foo/bar'
-  print(package.path) --> '/foo/bar/?.luac;/foo/bar/?.lua; . . .'
-
-  -- Combined function call:
+  -- Complex function call:
   require 'lib' {
     before = {'/foo/bar', '/bar/foo'},
     after = '/foo/baz',
-    path_form = {'<dir>/?.luac', '<dir>/.lua'},
+    path_form = {'<dir>/?.luac', '<dir>/.lua'},  -- Custom template formats.
     cpath_form= '<dir>/.so'
   }
+  print(package.path) --> '/foo/bar/?.luac;/foo/bar/?.lua;
+     -- /bar/foo/?.luac;/bar/foo/?.lua;. . .;/foo/baz/?.luac;/foo/baz/?.lua'
+  print(package.cpath) --> '/foo/bar/?.so;/bar/foo/?.so;. . .;/foo/baz/?.so'
 
   -- Localized changes to module search paths (reduces side-effects).
   do
@@ -32,12 +29,9 @@ SYNOPSIS
   end
   local QUX = require 'qux'  -- does not search inside /foo/bar & /bar/foo
 
- -- Utilty functions (assuming "lua test/example.lua").
+  -- Utilty functions (assuming "lua test/example.lua").
   local LIB = require 'lib'
-  LIB.split(package.path)
-     --> {'/foo/bar/?.lua', '/foo/bar/?/init.lua',
-          'test/../lib/lua/?.lua', 'test/../lib/lua/?/init.lua', 
-          . . . , '/foo/baz/?.lua', '/foo/baz/?/init.lua'}
+  LIB.split(package.path) --> {'/foo/bar/?.lua', '/foo/bar/?/init.lua', . . .}
 
 DESCRIPTION
 
@@ -115,7 +109,7 @@ API
                   path_form={ [format...] }, cpath_form={ [format...] }  }
                 -> require
   
-    This builds a `require` like function that prepends the given directories
+    This builds a `require` like function that adds the given directories
     to the search paths, invokes the original `require` function, and then
     restores the search paths.  The arguments are the same as for the
     `LIB()` function.

@@ -1,4 +1,4 @@
-development
+0.2.0.20120426
   A '<bin>' prefixed to a directory string will be replaced with the directory
     of the currently executing script (requires 'findbin' module).
   Add more options to `newrequire` and `LIB ()` functions.
