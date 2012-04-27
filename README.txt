@@ -4,16 +4,15 @@ LUA MODULE
   
 SYNOPSIS
 
-  -- Basic usage: adding directories to module search paths.
-  require 'lib' '/foo/bar'
-    -- prepends given directory to package.path and package.cpath.
-  require 'lib'.prepend '/foo/bar' -- same as above
-  require 'lib'.append '/foo/baz'  -- appends instead
+  -- Basic usage: adding directories to package.path & package.cpath.
+  require 'lib' '/foo/bar' -- prepends given directory
+  require 'lib'.before '/foo/bar' -- same as above
+  require 'lib'.after '/foo/baz'  -- appends instead
   require 'lib' '<bin>/../lib/lua' -- prepends directory
                        -- relative to the currently executing script
                        -- (requires 'findbin' [2] module)
   require 'lpeg' -- this now searches in above paths.
-
+  
   -- Localized changes to module search paths (reduces side-effects).
   do
     local require = require 'lib'.newrequire('/foo/bar', '/bar/foo')
@@ -30,8 +29,16 @@ SYNOPSIS
   
   -- Custom template formats.
   require 'lib'.path = {'<dir>/?.luac', '<dir>/.lua'}
-  require 'lib'.prepend '/foo/bar'
+  require 'lib'.before '/foo/bar'
   print(package.path) --> '/foo/bar/?.luac;/foo/bar/?.lua; . . .'
+
+  -- More complex usage:
+  require 'lib' {
+    before = {'/foo/bar', '/bar/foo'},
+    after = '/foo/baz',
+    path = {'<dir>/?.luac', '<dir>/.lua'},
+    cpath= '<dir>/.so'
+  }
 
 DESCRIPTION
 
@@ -56,16 +63,16 @@ API
       
     Caveat: Function raises an error if `dir` contains a `?`.
 
-  LIB.prepend(dir)
+  LIB.before(dir)
 
     This is the same as `LIB (dir)`.  Examples:
     
-      require 'lib'.prepend'/foo/bar'
-      require 'lib'.prepend'<bin>/../lib/lua'      
+      require 'lib'.before'/foo/bar'
+      require 'lib'.before'<bin>/../lib/lua'      
 
-  LIB.append(dir)
+  LIB.after(dir)
   
-    Same as `LIB.prepend` but appends rather than prepends.
+    Same as `LIB.before` but appends rather than prepends.
 
   LIB.split(paths)
   
@@ -77,8 +84,8 @@ API
   LIB.path / LIB.cpath
   
     This is a table containing the formats of templates inserted into
-    `package.path` and `package.cpath` by `LIB.prepend` and
-    `LIB.append`.  For example, default values are
+    `package.path` and `package.cpath` by `LIB.before` and
+    `LIB.after`.  For example, default values are
   
       LIB.path = {'<dir>/?.lua', '<dir>/?/init.lua'}
       LIB.cpath = {'<dir>/?.so', '<dir>/?.dll'}
@@ -131,7 +138,7 @@ DESIGN NOTES
   It may be argued that compiled bytecode just as well be given a .lua
   extension.
   
-  `LIB.prepend`, `LIB.append`, and `LIB.path/cpath` cause global side-effects.
+  `LIB.before`, `LIB.after`, and `LIB.path/cpath` cause global side-effects.
   After all, `require` utilizes `package.path` and `package.cpath` globals.
   
   Directory names cannot contain '?' or be prefixed by '<bin>'.  For future

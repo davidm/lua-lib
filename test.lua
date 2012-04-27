@@ -63,28 +63,28 @@ checkeq( M.join{}, '')
 checkeq( M.join{'./?.lua'}, './?.lua')
 checkeq( M.join{'./?.lua', '/foo/?.lua'}, P'./?.lua;/foo/?.lua' )
 
--- test append
+-- test after
 package.path = ''; package.cpath = ''
-M.append('foo')
+M.after('foo')
 checkeq(package.path, P'foo/?.lua;foo/?/init.lua')
 checkeq(package.cpath, P'foo/?.so;foo/?.dll')
-M.append('bar')
+M.after('bar')
 checkeq(package.path, P'foo/?.lua;foo/?/init.lua;bar/?.lua;bar/?/init.lua')
 checkeq(package.cpath, P'foo/?.so;foo/?.dll;bar/?.so;bar/?.dll')
 package.path = ''; package.cpath = ''
-local ok, err = pcall(function() M.append('a?b') end)
+local ok, err = pcall(function() M.after('a?b') end)
 assert(err:match'contains a %?') -- '?' can't be escaped
 
--- test prepend
+-- test before
 package.path = ''; package.cpath = ''
-M.prepend('foo')
+M.before('foo')
 checkeq(package.path, P'foo/?.lua;foo/?/init.lua')
 checkeq(package.cpath, P'foo/?.so;foo/?.dll')
-M.prepend('bar')
+M.before('bar')
 checkeq(package.path, P'bar/?.lua;bar/?/init.lua;foo/?.lua;foo/?/init.lua')
 checkeq(package.cpath, P'bar/?.so;bar/?.dll;foo/?.so;foo/?.dll')
 
--- test prepend shorthand
+-- test before shorthand
 package.path = ''
 M 'foo'
 checkeq(package.path, P'foo/?.lua;foo/?/init.lua')
@@ -111,7 +111,7 @@ arg[0] = 'a/b/c.lua'  -- trick findbin
 if pcall(require, 'findbin') then
   package.path = ''; package.cpath = ''
   M.path =  {'<dir>/?.lua', '<dir>/?/init.lua'}
-  M.prepend('<bin>/../foo')
+  M.before('<bin>/../foo')
   checkeq(package.path, P'a/b/../foo/?.lua;a/b/../foo/?/init.lua')
 else
   print 'WARNING: tests with findbin skipped (module not found)'
