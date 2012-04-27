@@ -3,7 +3,8 @@ development
     of the currently executing script (requires 'findbin' module).
   Add more options to `newrequire` and `LIB ()` functions.
   append and prepend renamed after and before repectively.
-  Raise error if dierctory contains '?' or ';' character (unescapable).
+  Raise error if directory contains '?' or ';' character (unescapable).
+  Add findbin dependency (optional but recommended).
 
 0.1.1.20120407
   Repackage and reorganize sources.

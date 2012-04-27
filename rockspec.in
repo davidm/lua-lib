@@ -12,7 +12,8 @@ description = {
   maintainer = 'David Manura'
 }
 dependencies = {
-  'lua >= 5.1' -- including 5.2
+  'lua >= 5.1', -- including 5.2
+  'find-bin',  -- optional but recommended
 }
 build = {
   type = 'builtin',
